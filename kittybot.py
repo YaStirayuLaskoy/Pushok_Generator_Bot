@@ -17,6 +17,7 @@ secret_token = os.getenv('TOKEN')
 updater = Updater(token=secret_token)
 URL = 'https://api.thecatapi.com/v1/images/search'
 URL_DOG = 'https://api.thedogapi.com/v1/images/search'
+URL_FOX = 'https://randomfox.ca/floof/'
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -53,6 +54,21 @@ def get_new_image_dog():
     return random_dog
 
 
+def get_new_image_fox():
+    """Вынимает картинку лисы из API."""
+    try:
+        response = requests.get(URL_FOX)
+    except Exception as error:
+        # print(error)
+        logging.error(f'Ошибка при запросе к основному API: {error}')
+        new_url = URL
+        response = requests.get(new_url)
+
+    response = response.json()
+    random_fox = response.get('image')
+    return random_fox
+
+
 def new_cat(update, context):
     """Отправляет картинку кота."""
     chat = update.effective_chat
@@ -65,6 +81,12 @@ def new_dog(update, context):
     context.bot.send_photo(chat.id, get_new_image_dog())
 
 
+def new_fox(update, context):
+    """Отправляет картинку лисы."""
+    chat = update.effective_chat
+    context.bot.send_photo(chat.id, get_new_image_fox())
+
+
 def wake_up(update, context):
     """/Start бота."""
     # Получаем инфу о чате, из которого пришло сообщение,
@@ -75,7 +97,8 @@ def wake_up(update, context):
     # За счёт парметра resize_keyboard=True сделаем кнопки поменьше
     button = ReplyKeyboardMarkup([
         ['/newcat', '/newdog'],
-        ['/hello']
+        ['/fox'],
+        # ['/hello']
     ], resize_keyboard=True)
 
     # В ответ на команду /start будет отправлено сообщение
@@ -108,6 +131,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('newcat', new_cat))
 
     updater.dispatcher.add_handler(CommandHandler('newdog', new_dog))
+
+    updater.dispatcher.add_handler(CommandHandler('fox', new_fox))
 
     updater.dispatcher.add_handler(CommandHandler('hello', say_hi))
 
